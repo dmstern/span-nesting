@@ -214,3 +214,9 @@ function nestElements(parent: Element) {
   const newParagraph = assembleNewParagraph(parent, nestedSpans);
   return newParagraph;
 }
+
+const paragraphs = document.querySelectorAll("p");
+paragraphs.forEach((p) => {
+  const newParagraph = nestElements(p);
+  p.replaceWith(newParagraph);
+});
