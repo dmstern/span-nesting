@@ -1,6 +1,14 @@
-//@ts-check
+interface ClassGroupMapping {
+  classKey: string;
+  spans: Element[];
+}
 
-function sortSpansBySize(a, b) {
+/**
+ *
+ * @param { {classKey: string; spans: Element[]} } a
+ * @param { {classKey: string; spans: Element[]} } b
+ */
+function sortSpansBySize(a: ClassGroupMapping, b: ClassGroupMapping) {
   const firstSize = a.spans.length;
   const secondSize = b.spans.length;
 
@@ -20,7 +28,7 @@ function sortSpansBySize(a, b) {
  * @param {Element[]} spans
  * @returns { {classKey: string; spans: Element[]}[] }
  */
-function groupByClass(spans) {
+function groupByClass(spans: Element[]): ClassGroupMapping[] {
   const allClasses = [...spans].map((span) => [...span.classList]).flat();
   const uniqueClasses = new Set(allClasses);
   const groupedLogicSpans = [...uniqueClasses].map((cssClass) => {
@@ -33,41 +41,40 @@ function groupByClass(spans) {
   return cleanupGroupings(groupedLogicSpans);
 }
 
+function containSpansWithClass(classGroupMapping: ClassGroupMapping) {
+  return classGroupMapping.spans.some((span) => span.classList.contains(classGroupMapping.classKey));
+}
+
 /**
  * cleanup: avoid grouping spans that are already children of other groupings
  * @param { {classKey: string; spans: Element[]}[] } groupedLogicSpans
  */
-function cleanupGroupings(groupedLogicSpans) {
-  const result = [];
+function cleanupGroupings(groupedLogicSpans: ClassGroupMapping[]): ClassGroupMapping[] {
+  const result: ClassGroupMapping[] = [];
 
-  groupedLogicSpans.forEach(({ classKey }) => {
-    const containSpansWithClass = ({ spans }) =>
-      spans.some((span) => span.classList.contains(classKey));
-
+  groupedLogicSpans.forEach((groupedLogicSpan) => {
     const allMatchingGroups = groupedLogicSpans.filter(containSpansWithClass);
     const sorted = allMatchingGroups.sort(sortSpansBySize);
     const biggest = sorted.at(-1);
     const resultContainsSpan = result.some(containSpansWithClass);
 
-    if (!resultContainsSpan) {
+    if (!resultContainsSpan && biggest) {
       result.push(biggest);
     }
   });
-
-  
 
   return result;
 }
 
 /**
  *
- * @param {Element} el1
- * @param {Element} el2
+ * @param {Element} firstElement
+ * @param {Element} secondElement
  *
  * @returns boolean
  */
-function haveOverlappingClass(el1, el2){
-  return [...el1.classList].some(clazz => el2.classList.contains(clazz))
+function haveOverlappingClass(firstElement: Element, secondElement: Element): boolean {
+  return [...firstElement.classList].some((clazz) => secondElement.classList.contains(clazz));
 }
 
 /**
@@ -77,12 +84,12 @@ function haveOverlappingClass(el1, el2){
  *
  * @returns void
  */
-function removeAlreadyNestedChildNodes(spanWrapper, nested){
-  spanWrapper.childNodes.forEach(childNode => {
-    if([...nested.children].some(c => haveOverlappingClass(c, childNode))){
-      childNode.remove()
+function removeAlreadyNestedChildNodes(spanWrapper: HTMLSpanElement, nested: Element) {
+  spanWrapper.childNodes.forEach((childNode) => {
+    if (childNode instanceof Element && [...nested.children].some((c) => haveOverlappingClass(c, childNode))) {
+      childNode.remove();
     }
-  })
+  });
 }
 
 /**
@@ -92,14 +99,14 @@ function removeAlreadyNestedChildNodes(spanWrapper, nested){
  *
  * @returns void
  */
-function unwrapNodesWithSameClassAsParent(spanWrapper, nested) {
-  nested.childNodes.forEach(childNode => {
-    if(childNode instanceof Element &&  haveOverlappingClass(childNode, spanWrapper)) {
-      const inner = String(childNode.innerHTML)
-      childNode.remove()
-      nested.append(inner)
+function unwrapNodesWithSameClassAsParent(spanWrapper: HTMLSpanElement, nested: Element) {
+  nested.childNodes.forEach((childNode) => {
+    if (childNode instanceof Element && haveOverlappingClass(childNode, spanWrapper)) {
+      const inner = String(childNode.innerHTML);
+      childNode.remove();
+      nested.append(inner);
     }
-  })
+  });
 }
 
 /**
@@ -111,15 +118,12 @@ function unwrapNodesWithSameClassAsParent(spanWrapper, nested) {
  *
  * @returns HTMLSpanElement
  */
-function nestGroupedSpans(classKey, flatSpans) {
+function nestGroupedSpans(classKey: string, flatSpans: Element[]) {
   const spanWrapper = document.createElement("span");
   spanWrapper.classList.add(classKey);
 
-  console.log(flatSpans.map((span) => span.outerHTML));
-
   flatSpans.forEach((flatSpan) => {
-    const hasOnlyClassKeyClass =
-      flatSpan.classList.length === 1 && flatSpan.classList.contains(classKey);
+    const hasOnlyClassKeyClass = flatSpan.classList.length === 1 && flatSpan.classList.contains(classKey);
 
     if (hasOnlyClassKeyClass) {
       const textNode = document.createTextNode(flatSpan.innerHTML);
@@ -131,8 +135,8 @@ function nestGroupedSpans(classKey, flatSpans) {
         // we have to nest even deeper
         if (flatSpan.parentElement) {
           const nested = nestElements(flatSpan.parentElement); //todo check for recursion deepness?
-          removeAlreadyNestedChildNodes(spanWrapper, nested)
-          unwrapNodesWithSameClassAsParent(spanWrapper, nested)
+          removeAlreadyNestedChildNodes(spanWrapper, nested);
+          unwrapNodesWithSameClassAsParent(spanWrapper, nested);
           spanWrapper.append(...nested.children);
         }
       } else {
@@ -149,7 +153,7 @@ function nestGroupedSpans(classKey, flatSpans) {
  * @param {Element} node the old p node
  * @param {HTMLSpanElement[]} nestedSpans
  */
-function assembleNewParagraph(node, nestedSpans) {
+function assembleNewParagraph(node: Element, nestedSpans: HTMLSpanElement[]): Element {
   const newNode = document.createElement("p");
 
   // TODO do we need this?
@@ -170,9 +174,6 @@ function assembleNewParagraph(node, nestedSpans) {
       replaceSimilarSpansWithNestedSpan(newNode, child, nestedSpans);
     }
   });
-
-  console.log("RESULT:", newNode.outerHTML);
-
   return newNode;
 }
 
@@ -181,12 +182,12 @@ function assembleNewParagraph(node, nestedSpans) {
  * @param {HTMLSpanElement[]} nestedSpans
  * @param {Element} child
  */
-function replaceSimilarSpansWithNestedSpan(node, child, nestedSpans) {
+function replaceSimilarSpansWithNestedSpan(node: Element, child: Element, nestedSpans: HTMLSpanElement[]) {
   const isSpanAlreadyAdded =
-    node.childNodes.length > 1 &&
-    [...child.classList].every((currentClass) => {
-      return !!node.querySelector(`.${currentClass}`);
-    });
+      node.childNodes.length > 1 &&
+      [...child.classList].every((currentClass) => {
+        return !!node.querySelector(`.${currentClass}`);
+      });
 
   if (isSpanAlreadyAdded) {
     return;
@@ -205,7 +206,7 @@ function replaceSimilarSpansWithNestedSpan(node, child, nestedSpans) {
  *
  * @returns Element
  */
-function nestElements(parent) {
+function nestElements(parent: Element) {
   const children = parent.querySelectorAll("span");
   const classGroupMappings = groupByClass([...children]); // TODO maybe just call once and not recursive
 
@@ -216,21 +217,6 @@ function nestElements(parent) {
     return nestedSpan;
   });
 
-  console.log("parent", parent.outerHTML);
-
-  console.log(
-    "nestedSpans",
-    nestedSpans.map((span) => span.outerHTML)
-  );
-
   const newParagraph = assembleNewParagraph(parent, nestedSpans);
   return newParagraph;
-
-  // TODO: handle deeper nestings like languages
 }
-
-const paragraphs = document.querySelectorAll("p");
-paragraphs.forEach((p) => {
-  const newParagraph = nestElements(p);
-  p.replaceWith(newParagraph);
-});
