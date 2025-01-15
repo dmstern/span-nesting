@@ -118,7 +118,7 @@ function assembleNewParagraph(node, nestedSpans) {
     console.log(isTextNode ? child : child.outerHTML, isTextNode);
 
     if (isTextNode) {
-      newNode.append(child);
+      newNode.append(child.cloneNode());
     } else {
       replaceSimilarSpansWithNestedSpan(newNode, child, nestedSpans);
     }
