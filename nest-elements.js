@@ -1,5 +1,9 @@
 //@ts-check
-
+/**
+ *
+ * @param { {classKey: string; spans: Element[]} } a
+ * @param { {classKey: string; spans: Element[]} } b
+ */
 function sortSpansBySize(a, b) {
   const firstSize = a.spans.length;
   const secondSize = b.spans.length;
@@ -61,13 +65,13 @@ function cleanupGroupings(groupedLogicSpans) {
 
 /**
  *
- * @param {Element} el1
- * @param {Element} el2
+ * @param {Element} firstElement
+ * @param {Element} secondElement
  *
  * @returns boolean
  */
-function haveOverlappingClass(el1, el2){
-  return [...el1.classList].some(clazz => el2.classList.contains(clazz))
+function haveOverlappingClass(firstElement, secondElement){
+  return [...firstElement.classList].some(clazz => secondElement.classList.contains(clazz))
 }
 
 /**
@@ -79,7 +83,7 @@ function haveOverlappingClass(el1, el2){
  */
 function removeAlreadyNestedChildNodes(spanWrapper, nested){
   spanWrapper.childNodes.forEach(childNode => {
-    if([...nested.children].some(c => haveOverlappingClass(c, childNode))){
+    if(childNode instanceof Element && [...nested.children].some(nestedChild => haveOverlappingClass(nestedChild, childNode))){
       childNode.remove()
     }
   })
