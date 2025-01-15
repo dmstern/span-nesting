@@ -110,6 +110,21 @@ function unwrapNodesWithSameClassAsParent(
       childNode.remove();
       nested.append(inner);
     }
+    /* idea: but probably not working and recursion would be better
+    if(childNode instanceof HTMLSpanElement) {
+      childNode.childNodes.forEach((childNode2) => {
+        if (
+            childNode2 instanceof Element &&
+            haveOverlappingClass(childNode2, spanWrapper)
+        ) {
+          const inner = String(childNode2.innerHTML);
+          childNode2.remove();
+          childNode.append(inner);
+        }
+      })
+    }
+    */
+
   });
 }
 
