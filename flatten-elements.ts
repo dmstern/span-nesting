@@ -1,3 +1,7 @@
+function uid() : number{
+    return Date.now()
+}
+
 
 function flattenSpanElements(pElement: HTMLElement): HTMLElement {
     const processSpan = (
@@ -22,7 +26,7 @@ function flattenSpanElements(pElement: HTMLElement): HTMLElement {
                 result.push(textSpan);
             } else if (node instanceof HTMLSpanElement) {
                 const childSpan = node as HTMLSpanElement;
-                const combinedClasses = [...parentClasses, ...childSpan.classList.values().map((cls) => `${cls}_${uid()}`)];
+                const combinedClasses = [...parentClasses, ...[...childSpan.classList].map((cls) => `${cls}_${uid()}`)];
                 const combinedAttributes = [...parentAttributes, ...childSpan.attributes];
                 result.push(...processSpan(childSpan, combinedClasses, combinedAttributes));
             } else if (node instanceof HTMLElement) {
