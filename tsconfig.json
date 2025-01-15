@@ -1,6 +1,7 @@
 {
   "compilerOptions": {
     "module": "commonjs",
+    "target": "ES2024",
     "noImplicitAny": true,
     "removeComments": true,
     "preserveConstEnums": true,
