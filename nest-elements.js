@@ -61,6 +61,51 @@ function cleanupGroupings(groupedLogicSpans) {
 
 /**
  *
+ * @param {Element} el1
+ * @param {Element} el2
+ *
+ * @returns boolean
+ */
+function haveOverlappingClass(el1, el2){
+  return [...el1.classList].some(clazz => el2.classList.contains(clazz))
+}
+
+/**
+ *
+ * @param {HTMLSpanElement} spanWrapper
+ * @param {Element} nested
+ *
+ * @returns void
+ */
+function removeAlreadyNestedChildNodes(spanWrapper, nested){
+  spanWrapper.childNodes.forEach(childNode => {
+    if([...nested.children].some(c => haveOverlappingClass(c, childNode))){
+      childNode.remove()
+    }
+  })
+}
+
+/**
+ *
+ * @param {HTMLSpanElement} spanWrapper
+ * @param {Element} nested
+ *
+ * @returns void
+ */
+function unwrapNodesWithSameClassAsParent(spanWrapper, nested) {
+  nested.childNodes.forEach(childNode => {
+    if(childNode instanceof Element &&  haveOverlappingClass(childNode, spanWrapper)) {
+      const inner = String(childNode.innerHTML)
+      childNode.remove()
+      nested.append(inner)
+    }
+  })
+}
+
+/**
+ * todo add reason for: removeAlreadyNestedChildNodes
+ * todo add reason for: unwrapNodesWithSameClassAsParent
+ *
  * @param {string} classKey
  * @param {Element[]} flatSpans
  *
@@ -85,7 +130,9 @@ function nestGroupedSpans(classKey, flatSpans) {
       if (flatSpan.classList.length > 1) {
         // we have to nest even deeper
         if (flatSpan.parentElement) {
-          const nested = nestElements(flatSpan.parentElement);
+          const nested = nestElements(flatSpan.parentElement); //todo check for recursion deepness?
+          removeAlreadyNestedChildNodes(spanWrapper, nested)
+          unwrapNodesWithSameClassAsParent(spanWrapper, nested)
           spanWrapper.append(...nested.children);
         }
       } else {
