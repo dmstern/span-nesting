@@ -158,13 +158,6 @@ function assembleNewParagraph(
 ): Element {
   const newNode = document.createElement("p");
 
-  // TODO do we need this?
-  // const whitespaceCleanedChildren = [...node.childNodes].filter((childNode) => {
-  //   const textContent = childNode.textContent?.trim();
-  //   const isNotEmpty = !!textContent?.length && textContent.length > 0;
-  //   return isNotEmpty;
-  // });
-
   [...node.childNodes].forEach((child) => {
     const isTextNode = !(child instanceof Element);
 
@@ -180,7 +173,7 @@ function assembleNewParagraph(
 }
 
 /**
- * 
+ *
  */
 function replaceSimilarSpansWithNestedSpan(
   node: Element,
