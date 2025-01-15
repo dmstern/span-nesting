@@ -5,8 +5,6 @@ interface ClassGroupMapping {
 
 /**
  *
- * @param { {classKey: string; spans: Element[]} } a
- * @param { {classKey: string; spans: Element[]} } b
  */
 function sortSpansBySize(a: ClassGroupMapping, b: ClassGroupMapping) {
   const firstSize = a.spans.length;
@@ -25,8 +23,6 @@ function sortSpansBySize(a: ClassGroupMapping, b: ClassGroupMapping) {
 
 /**
  *
- * @param {Element[]} spans
- * @returns { {classKey: string; spans: Element[]}[] }
  */
 function groupByClass(spans: Element[]): ClassGroupMapping[] {
   const allClasses = [...spans].map((span) => [...span.classList]).flat();
@@ -42,14 +38,17 @@ function groupByClass(spans: Element[]): ClassGroupMapping[] {
 }
 
 function containSpansWithClass(classGroupMapping: ClassGroupMapping) {
-  return classGroupMapping.spans.some((span) => span.classList.contains(classGroupMapping.classKey));
+  return classGroupMapping.spans.some((span) =>
+    span.classList.contains(classGroupMapping.classKey)
+  );
 }
 
 /**
  * cleanup: avoid grouping spans that are already children of other groupings
- * @param { {classKey: string; spans: Element[]}[] } groupedLogicSpans
  */
-function cleanupGroupings(groupedLogicSpans: ClassGroupMapping[]): ClassGroupMapping[] {
+function cleanupGroupings(
+  groupedLogicSpans: ClassGroupMapping[]
+): ClassGroupMapping[] {
   const result: ClassGroupMapping[] = [];
 
   groupedLogicSpans.forEach((groupedLogicSpan) => {
@@ -68,25 +67,28 @@ function cleanupGroupings(groupedLogicSpans: ClassGroupMapping[]): ClassGroupMap
 
 /**
  *
- * @param {Element} firstElement
- * @param {Element} secondElement
- *
- * @returns boolean
  */
-function haveOverlappingClass(firstElement: Element, secondElement: Element): boolean {
-  return [...firstElement.classList].some((clazz) => secondElement.classList.contains(clazz));
+function haveOverlappingClass(
+  firstElement: Element,
+  secondElement: Element
+): boolean {
+  return [...firstElement.classList].some((clazz) =>
+    secondElement.classList.contains(clazz)
+  );
 }
 
 /**
  *
- * @param {HTMLSpanElement} spanWrapper
- * @param {Element} nested
- *
- * @returns void
  */
-function removeAlreadyNestedChildNodes(spanWrapper: HTMLSpanElement, nested: Element) {
+function removeAlreadyNestedChildNodes(
+  spanWrapper: HTMLSpanElement,
+  nested: Element
+) {
   spanWrapper.childNodes.forEach((childNode) => {
-    if (childNode instanceof Element && [...nested.children].some((c) => haveOverlappingClass(c, childNode))) {
+    if (
+      childNode instanceof Element &&
+      [...nested.children].some((c) => haveOverlappingClass(c, childNode))
+    ) {
       childNode.remove();
     }
   });
@@ -94,14 +96,16 @@ function removeAlreadyNestedChildNodes(spanWrapper: HTMLSpanElement, nested: Ele
 
 /**
  *
- * @param {HTMLSpanElement} spanWrapper
- * @param {Element} nested
- *
- * @returns void
  */
-function unwrapNodesWithSameClassAsParent(spanWrapper: HTMLSpanElement, nested: Element) {
+function unwrapNodesWithSameClassAsParent(
+  spanWrapper: HTMLSpanElement,
+  nested: Element
+) {
   nested.childNodes.forEach((childNode) => {
-    if (childNode instanceof Element && haveOverlappingClass(childNode, spanWrapper)) {
+    if (
+      childNode instanceof Element &&
+      haveOverlappingClass(childNode, spanWrapper)
+    ) {
       const inner = String(childNode.innerHTML);
       childNode.remove();
       nested.append(inner);
@@ -113,17 +117,14 @@ function unwrapNodesWithSameClassAsParent(spanWrapper: HTMLSpanElement, nested: 
  * todo add reason for: removeAlreadyNestedChildNodes
  * todo add reason for: unwrapNodesWithSameClassAsParent
  *
- * @param {string} classKey
- * @param {Element[]} flatSpans
- *
- * @returns HTMLSpanElement
  */
 function nestGroupedSpans(classKey: string, flatSpans: Element[]) {
   const spanWrapper = document.createElement("span");
   spanWrapper.classList.add(classKey);
 
   flatSpans.forEach((flatSpan) => {
-    const hasOnlyClassKeyClass = flatSpan.classList.length === 1 && flatSpan.classList.contains(classKey);
+    const hasOnlyClassKeyClass =
+      flatSpan.classList.length === 1 && flatSpan.classList.contains(classKey);
 
     if (hasOnlyClassKeyClass) {
       const textNode = document.createTextNode(flatSpan.innerHTML);
@@ -150,10 +151,11 @@ function nestGroupedSpans(classKey: string, flatSpans: Element[]) {
 
 /**
  *
- * @param {Element} node the old p node
- * @param {HTMLSpanElement[]} nestedSpans
  */
-function assembleNewParagraph(node: Element, nestedSpans: HTMLSpanElement[]): Element {
+function assembleNewParagraph(
+  node: Element,
+  nestedSpans: HTMLSpanElement[]
+): Element {
   const newNode = document.createElement("p");
 
   // TODO do we need this?
@@ -178,16 +180,18 @@ function assembleNewParagraph(node: Element, nestedSpans: HTMLSpanElement[]): El
 }
 
 /**
- * @param {Element} node the new created p node
- * @param {HTMLSpanElement[]} nestedSpans
- * @param {Element} child
+ * 
  */
-function replaceSimilarSpansWithNestedSpan(node: Element, child: Element, nestedSpans: HTMLSpanElement[]) {
+function replaceSimilarSpansWithNestedSpan(
+  node: Element,
+  child: Element,
+  nestedSpans: HTMLSpanElement[]
+) {
   const isSpanAlreadyAdded =
-      node.childNodes.length > 1 &&
-      [...child.classList].every((currentClass) => {
-        return !!node.querySelector(`.${currentClass}`);
-      });
+    node.childNodes.length > 1 &&
+    [...child.classList].every((currentClass) => {
+      return !!node.querySelector(`.${currentClass}`);
+    });
 
   if (isSpanAlreadyAdded) {
     return;
@@ -202,9 +206,6 @@ function replaceSimilarSpansWithNestedSpan(node: Element, child: Element, nested
 
 /**
  *
- * @param {Element} parent old node
- *
- * @returns Element
  */
 function nestElements(parent: Element) {
   const children = parent.querySelectorAll("span");
