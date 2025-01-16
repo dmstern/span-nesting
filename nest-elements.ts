@@ -37,9 +37,9 @@ function groupByClass(spans: Element[]): ClassGroupMapping[] {
   return cleanupGroupings(groupedLogicSpans);
 }
 
-function containSpansWithClass(classGroupMapping: ClassGroupMapping) {
+function containSpansWithClass(classGroupMapping: ClassGroupMapping, classKey : string) {
   return classGroupMapping.spans.some((span) =>
-    span.classList.contains(classGroupMapping.classKey)
+    span.classList.contains(classKey)
   );
 }
 
@@ -52,10 +52,10 @@ function cleanupGroupings(
   const result: ClassGroupMapping[] = [];
 
   groupedLogicSpans.forEach((groupedLogicSpan) => {
-    const allMatchingGroups = groupedLogicSpans.filter(containSpansWithClass);
+    const allMatchingGroups = groupedLogicSpans.filter(group => containSpansWithClass(group, groupedLogicSpan.classKey));
     const sorted = allMatchingGroups.sort(sortSpansBySize);
     const biggest = sorted.at(-1);
-    const resultContainsSpan = result.some(containSpansWithClass);
+    const resultContainsSpan = result.some(group => containSpansWithClass(group, groupedLogicSpan.classKey));
 
     if (!resultContainsSpan && biggest) {
       result.push(biggest);
