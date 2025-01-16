@@ -77,55 +77,18 @@ function haveOverlappingClass(
   );
 }
 
-/**
- *
- */
-function removeAlreadyNestedChildNodes(
-  spanWrapper: HTMLSpanElement,
-  nested: Element
-) {
-  spanWrapper.childNodes.forEach((childNode) => {
-    if (
-      childNode instanceof Element &&
-      [...nested.children].some((c) => haveOverlappingClass(c, childNode))
-    ) {
-      childNode.remove();
+function getNextElementsTillOnlySingleClass(elements: Element[], classKey: string) : Element[] {
+  const nextElements : Element[] = [elements[0]];
+  for (let i = 1; i < elements.length; i++) {
+    if(elements[i].classList.length > 1) {
+      const elementWithoutClass = elements[i].cloneNode(true) as Element;
+      elementWithoutClass.classList.remove(classKey)
+      nextElements.push(elementWithoutClass)
+    } else {
+      return nextElements
     }
-  });
-}
-
-/**
- *
- */
-function unwrapNodesWithSameClassAsParent(
-  spanWrapper: HTMLSpanElement,
-  nested: Element
-) {
-  nested.childNodes.forEach((childNode) => {
-    if (
-      childNode instanceof Element &&
-      haveOverlappingClass(childNode, spanWrapper)
-    ) {
-      const inner = String(childNode.innerHTML);
-      childNode.remove();
-      nested.append(inner);
-    }
-    /* idea: but probably not working and recursion would be better
-    if(childNode instanceof HTMLSpanElement) {
-      childNode.childNodes.forEach((childNode2) => {
-        if (
-            childNode2 instanceof Element &&
-            haveOverlappingClass(childNode2, spanWrapper)
-        ) {
-          const inner = String(childNode2.innerHTML);
-          childNode2.remove();
-          childNode.append(inner);
-        }
-      })
-    }
-    */
-
-  });
+  }
+  return nextElements;
 }
 
 /**
@@ -145,18 +108,26 @@ function nestGroupedSpans(classKey: string, flatSpans: Element[]) {
       const textNode = document.createTextNode(flatSpan.innerHTML);
       spanWrapper.append(textNode);
     } else {
-      flatSpan.classList.remove(classKey);
+      flatSpan.classList.remove(classKey)
+      const spanWrapperContainsFlatSpan = haveOverlappingClass(spanWrapper, flatSpan);
+      const spanWrapperChildContainsFlatSpan =  [...spanWrapper.children].some(child => haveOverlappingClass(child, flatSpan))
 
-      if (flatSpan.classList.length > 1) {
+      if (!spanWrapperContainsFlatSpan && !spanWrapperChildContainsFlatSpan)  {
+        // create new wrapper, which has the following conditions:
+        // - contains everything, which comes after flatspan till there is a span with only class = "classkey"
+        // - classKey gets removed as class from all other spans
+        const index = flatSpans.indexOf(flatSpan);
+        const nextSiblings = getNextElementsTillOnlySingleClass(flatSpans.slice(index), classKey)
         // we have to nest even deeper
-        if (flatSpan.parentElement) {
-          const nested = nestElements(flatSpan.parentElement); //todo check for recursion deepness?
-          removeAlreadyNestedChildNodes(spanWrapper, nested);
-          unwrapNodesWithSameClassAsParent(spanWrapper, nested);
-          spanWrapper.append(...nested.children);
+        const nestingIsFinished = nextSiblings.length === 1 && nextSiblings[0].classList.length === 1
+        if (nestingIsFinished) {
+          spanWrapper.append(flatSpan.cloneNode(true));
+        } else {
+          const newNode = document.createElement("p");
+          newNode.append(...nextSiblings)
+          const nested = nestElements(newNode); //todo check for recursion deepness?
+          spanWrapper.append(...nested.childNodes);
         }
-      } else {
-        spanWrapper.append(flatSpan.cloneNode(true));
       }
     }
   });
@@ -184,6 +155,9 @@ function assembleNewParagraph(
       replaceSimilarSpansWithNestedSpan(newNode, child, nestedSpans);
     }
   });
+  // If there are no ChildElements (in the deepest or lowest idk?) we still need to add the nestedSpans
+  replaceSimilarSpansWithNestedSpan(newNode, null, nestedSpans);
+
   return newNode;
 }
 
@@ -196,7 +170,7 @@ function replaceSimilarSpansWithNestedSpan(
   nestedSpans: HTMLSpanElement[]
 ) {
   const isSpanAlreadyAdded =
-    node.childNodes.length > 1 &&
+    node.childNodes.length > 1 && child !== null &&
     [...child.classList].every((currentClass) => {
       return !!node.querySelector(`.${currentClass}`);
     });
@@ -208,7 +182,7 @@ function replaceSimilarSpansWithNestedSpan(
   const nextNestedSpan = nestedSpans.shift();
 
   if (nextNestedSpan) {
-    node.append(nextNestedSpan);
+    node.append(nextNestedSpan.cloneNode(true));
   }
 }
 
