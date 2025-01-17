@@ -204,8 +204,12 @@ function nestElements(parent: Element) {
   return newParagraph;
 }
 
-const paragraphs = document.querySelectorAll("p");
-paragraphs.forEach((p) => {
-  const newParagraph = nestElements(p);
-  p.replaceWith(newParagraph);
-});
+const button = document.getElementById("nest-button")
+
+button.addEventListener("click", () =>{
+      const paragraphs = document.querySelectorAll("p");
+      paragraphs.forEach((p) => {
+        const newParagraph = nestElements(p);
+        p.replaceWith(newParagraph);
+      })
+})

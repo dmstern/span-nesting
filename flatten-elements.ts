@@ -47,7 +47,8 @@ function flattenSpanElements(pElement: HTMLElement): HTMLElement {
             newChildNodes.push(
                 ...processSpan(
                     node,
-                    Array.from(node.classList).map((cls) => `${cls}_${uid()}`),
+                    //Array.from(node.classList).map((cls) => `${cls}_${uid()}`),
+                    Array.from(node.classList).map((cls) => `${cls}}`),
                     Array.from(node.attributes),
                 ),
             );
@@ -61,3 +62,13 @@ function flattenSpanElements(pElement: HTMLElement): HTMLElement {
     newChildNodes.forEach((newSpan) => pElement.appendChild(newSpan));
     return pElement;
 }
+
+const flattenButton = document.getElementById("flatten-button")
+
+flattenButton.addEventListener("click", () =>{
+    const paragraphs = document.querySelectorAll("p");
+    paragraphs.forEach((p) => {
+        const newParagraph = flattenSpanElements(p);
+        p.replaceWith(newParagraph);
+    })
+})
