@@ -155,17 +155,63 @@ function replaceSimilarSpansWithNestedSpan(node: Element, child: Element | null,
     }
 }
 
+function mergeSingleElement(span : HTMLSpanElement) : Element {
+    let returnVal = document.createElement("span")
+    let currentSpan = returnVal
+    let nestedSpan :HTMLSpanElement
+    span.classList.forEach((className) => {
+        nestedSpan = document.createElement("span")
+        nestedSpan.classList.add(className)
+        currentSpan.append(nestedSpan);
+        currentSpan = nestedSpan
+    })
+    currentSpan.innerHTML = span.innerHTML
+    return returnVal.firstElementChild;
+
+}
+
+function getOverlappingClass(elements : Element[]) {
+    return [...elements[0].classList.values()].find((clazz) => elements.every((el) => el.classList.contains(clazz)));
+}
+function mergeElements(elements:Element[]) {
+    let returnVal : HTMLSpanElement = document.createElement("span");
+    const overLappingClass = getOverlappingClass(elements)
+    returnVal.classList.add(overLappingClass)
+    elements.forEach((el) =>{
+        el.classList.remove(overLappingClass)
+            if(el.classList.length === 0) {
+                returnVal.innerHTML += el.innerHTML
+            } else {
+                returnVal.append(el.cloneNode(true))
+            }
+    })
+    return returnVal;
+
+}
+
 function nestElements(parent: Element) {
-    const children = parent.querySelectorAll("span");
-    const classGroupMappings = groupByClass([...children]); // TODO maybe just call once and not recursive
-
-    const nestedSpans = classGroupMappings.map(({classKey, spans}) => {
-        const nestedSpan = nestGroupedSpans(classKey, spans);
-        return nestedSpan;
-    });
-
-    const newParagraph = assembleNewParagraph(parent, nestedSpans);
-    return newParagraph;
+    let spans = parent.querySelectorAll("span");
+    let i = 0
+    while(i<spans.length){
+        const spansWithSameClasses : Element[] = []
+        const currentSpan = spans[i];
+        spans.forEach((span) => {
+            if(haveOverlappingClass(currentSpan, span)) {
+            spansWithSameClasses.push(span)
+            }
+        })
+        if(spansWithSameClasses.length > 1) {
+            currentSpan.replaceWith(mergeElements(spansWithSameClasses))
+            for (let j =1;j<spansWithSameClasses.length;j++) {
+                spans[i+j].remove()
+            }
+        } else {
+            currentSpan.replaceWith(mergeSingleElement(currentSpan))
+            i++
+        }
+        spans = parent.querySelectorAll("span");
+    }
+    return parent;
 }
 
 
