@@ -12,12 +12,33 @@ function haveOverlappingClass(firstElement: Element, secondElement: Element): bo
 function getOverlappingClass(elements: HTMLSpanElement[]): string | undefined {
     return [...elements[0].classList.values()].find((clazz) => elements.every((el) => el.classList.contains(clazz)));
 }
+function isEmptyTextNode(node: Node): boolean {
+    const isNoElement = !(node instanceof Element);
+    const trimmedTextContent = node.textContent?.trim();
+    const trimmedTextContentIsEmpty = !trimmedTextContent?.length || trimmedTextContent.length === 0;
+    return isNoElement && trimmedTextContentIsEmpty;
+}
+
+function getNextSiblingIgnoreWhiteSpaceTextNodes(element: HTMLSpanElement) {
+    let returnVal = null;
+    let curVal: Node = element;
+    while (curVal.nextSibling && isEmptyTextNode(curVal.nextSibling)) {
+        curVal = curVal.nextSibling;
+    }
+    if (curVal.nextSibling) {
+        returnVal = curVal.nextSibling;
+    }
+    return returnVal;
+}
 
 function getSpansWithOverlappingClasses(element: HTMLSpanElement, elements: NodeListOf<HTMLSpanElement>) {
     const spansWithSameClasses: HTMLSpanElement[] = [];
+    let currentSpan = element;
+    spansWithSameClasses.push(currentSpan);
     elements.forEach((span) => {
-        if (haveOverlappingClass(element, span)) {
-            spansWithSameClasses.push(span);
+        if (haveOverlappingClass(element, span) && span.isEqualNode(getNextSiblingIgnoreWhiteSpaceTextNodes(currentSpan))) {
+            currentSpan = span;
+            spansWithSameClasses.push(currentSpan);
         }
     });
     return spansWithSameClasses;
