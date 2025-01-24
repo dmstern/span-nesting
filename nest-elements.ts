@@ -68,6 +68,13 @@ function mergeElements(elements: HTMLSpanElement[]) {
     return returnVal;
 }
 
+function removeUidFromClasses(element: Element) {
+    const newClsList: string[] = [...element.classList.values()];
+    newClsList.forEach((cls) => {
+        const classWithoutUID = cls.replace(/(.*logic--.+)_.+/, "$1").replace(/(.*citation--.+)_.+/, "$1");
+        element.classList.replace(cls, classWithoutUID);
+    });
+}
 
 /**
  * This function will merge children-span-elements of the parents if they have an overlapping class.
@@ -125,6 +132,13 @@ function nestElements(parent: Element) {
         replaceMultipleSpansWithSingleSpan(spansWithSameClasses, mergedSpan);
         spans = parent.querySelectorAll("span");
     }
+
+    parent.querySelectorAll("span").forEach((span: Element) => {
+        removeUidFromClasses(span);
+    });
+    parent.querySelectorAll("span").forEach((span: Element) => {
+        span.outerHTML = span.outerHTML.replaceAll(/\s+xmlns="[^"]*"/g, "");
+    });
     return parent;
 }
 
