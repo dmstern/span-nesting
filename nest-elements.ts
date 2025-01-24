@@ -31,7 +31,7 @@ function getNextSiblingIgnoreWhiteSpaceTextNodes(element: HTMLSpanElement) {
     return returnVal;
 }
 
-function getSpansWithOverlappingClasses(element: HTMLSpanElement, elements: NodeListOf<HTMLSpanElement>) {
+function getNeighbouringSpansWithOverlappingClasses(element: HTMLSpanElement, elements: NodeListOf<HTMLSpanElement>) {
     const spansWithSameClasses: HTMLSpanElement[] = [];
     let currentSpan = element;
     spansWithSameClasses.push(currentSpan);
@@ -141,23 +141,25 @@ function removeUidFromClasses(element: Element) {
  */
 function nestElements(parent: Element) {
     let spans = parent.querySelectorAll("span");
+    // We use a for-loop instead of forEach, since we change the spans element at each iteration which is not advised
+    // for functional programming.
     for (let i = 0; i < spans.length; i++) {
         const currentSpan = spans[i];
-        let mergedSpan: HTMLSpanElement;
-        const spansWithSameClasses: HTMLSpanElement[] = getSpansWithOverlappingClasses(currentSpan, spans);
-        if (spansWithSameClasses.length > 1) {
-            mergedSpan = mergeElements(spansWithSameClasses);
-        } else {
-            mergedSpan = mergeSingleElement(currentSpan);
-        }
+        const spansWithSameClasses: HTMLSpanElement[] = getNeighbouringSpansWithOverlappingClasses(currentSpan, spans);
+        const mergedSpan =
+            spansWithSameClasses.length > 1 ? mergeElements(spansWithSameClasses) : mergeSingleElement(currentSpan);
         replaceMultipleSpansWithSingleSpan(spansWithSameClasses, mergedSpan);
         spans = parent.querySelectorAll("span");
     }
 
-    parent.querySelectorAll("span").forEach((span: Element) => {
+    // You must not do removeUidFromClasses(span) and  span.outerHTML = span.outerHTML.replaceAll(/\s+xmlns="[^"]*"/g, "")
+    // in the same forEach loop, since the change of outerHTML changes the containedSpans and it could happen, that the
+    // uid does not get removed from all spans
+    const containedSpans = parent.querySelectorAll("span")
+    containedSpans.forEach((span: Element) => {
         removeUidFromClasses(span);
     });
-    parent.querySelectorAll("span").forEach((span: Element) => {
+    containedSpans.forEach((span: Element) => {
         span.outerHTML = span.outerHTML.replaceAll(/\s+xmlns="[^"]*"/g, "");
     });
     return parent;
