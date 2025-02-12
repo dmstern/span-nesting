@@ -96,7 +96,7 @@ function getNeighbouringSpansWithOverlappingClasses(element: HTMLSpanElement, el
     let currentSpan = element;
     spansWithSameClasses.push(currentSpan);
     elements.forEach((span) => {
-        if (haveOverlappingClass(element, span) && span.isEqualNode(getNextSiblingIgnoreWhiteSpaceTextNodes(currentSpan))) {
+        if (haveOverlappingClass(element, span) && haveOverlappingClass(currentSpan,span) && span.isEqualNode(getNextSiblingIgnoreWhiteSpaceTextNodes(currentSpan))) {
             currentSpan = span;
             spansWithSameClasses.push(currentSpan);
         }
@@ -183,7 +183,7 @@ function mergeSingleElement(span: HTMLSpanElement): HTMLSpanElement {
         currentSpan = nestedSpan;
     });
     currentSpan.innerHTML = span.innerHTML;
-    return returnVal.firstElementChild as HTMLSpanElement;
+    return returnVal.firstElementChild ? returnVal.firstElementChild as HTMLSpanElement : returnVal;
 }
 
 /**
@@ -224,6 +224,7 @@ function mergeElements(elements: HTMLSpanElement[]): HTMLSpanElement {
             appendElement(returnVal, element);
         });
     } else {
+
         console.error("At this there should always be an overlapping class.");
     }
 
